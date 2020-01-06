@@ -14,9 +14,23 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout" stretch="3,1,0">
+   <layout class="QVBoxLayout" name="verticalLayout" stretch="3,0,0,1,0">
     <item>
      <widget class="ImageWidget" name="image" native="true"/>
+    </item>
+    <item>
+     <widget class="QLabel" name="labelInfoPath">
+      <property name="text">
+       <string>InfoPath</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="labelInfoScale">
+      <property name="text">
+       <string>InfoScale</string>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QListView" name="listView"/>
@@ -24,9 +38,40 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
+       <widget class="QCheckBox" name="checkboxStayInside">
+        <property name="text">
+         <string>Stay Inside Image</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonSwitchInOutEditor">
+        <property name="text">
+         <string>Switch In/Out Editor</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonImageNext">
+        <property name="text">
+         <string>Next Image</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonImagePrev">
+        <property name="text">
+         <string>Prev Image</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="buttonDone">
         <property name="text">
-         <string>OK</string>
+         <string>Done</string>
         </property>
        </widget>
       </item>
