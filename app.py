@@ -5,6 +5,10 @@ from PyQt5.QtGui import QKeySequence
 from main_window import Ui_MainWindow
 import traceback
 import json
+import re
+import opentimelineio as otio
+import time
+from kdenlive_file import KdenliveFile
 
 class AppWindow(QMainWindow):
 	def __init__(self):
@@ -23,17 +27,28 @@ class AppWindow(QMainWindow):
 		self.ui.checkboxStayInside     .setShortcut(QKeySequence('s'))
 		self.ui.image.setTargetRatio(1920 / 1080) # Aspect ratio of the video slideshow
 		self.ui.image.bboxesChanged.connect(self.bboxesChanged)
-		self.images = sys.argv[1:]
+		self.kdenliveFile = None
+		self.images = []
 		self.imagesData = {}
-		print('images:', self.images)
-		try:
-			with open('image_bboxes.json', 'r') as f:
-				json_str = f.read()
-				print('json_str:', json_str)
-				self.fromJson(json_str)
-		except:
-			print('WARNING: unable to parse json data')
-			traceback.print_exc()
+		if re.match('.*\.kdenlive', sys.argv[1]):
+			print('open kdenlive file')
+			self.kdenliveFile = KdenliveFile()
+			self.kdenliveFile.Load(sys.argv[1])
+			self.imagesData = self.kdenliveFile.GetImagesData()
+			self.imagesData = dict(filter(lambda elem: re.match('.*\.jpg', elem[0]), self.imagesData.items()))
+			for img_path in self.imagesData:
+				self.images.append(img_path)
+		else:
+			self.images = sys.argv[1:]
+			print('images:', self.images)
+			try:
+				with open('image_bboxes.json', 'r') as f:
+					json_str = f.read()
+					print('json_str:', json_str)
+					self.fromJson(json_str)
+			except:
+				print('WARNING: unable to parse json data')
+				traceback.print_exc()
 		self.imageIdx = 0
 		img_path = self.images[self.imageIdx]
 		print('imagesData:', self.imagesData)
@@ -133,6 +148,15 @@ class AppWindow(QMainWindow):
 		print('json_str:', json_str)
 		with open("image_bboxes.json", "w") as text_file:
 			text_file.write(json_str)
+
+		if self.kdenliveFile is not None:
+			self.kdenliveFile.SetImagesData(self.imagesData)
+			self.kdenliveFile.AddGuides('/media/miso/data/mp3/Dali Hornak/Radioactive- Gatsby Souns live.mp3.downbeats')
+			self.kdenliveFile.SynchronizeToBeats('/media/miso/data/mp3/Dali Hornak/Radioactive- Gatsby Souns live.mp3.downbeats')
+			output_filename = re.sub(r'\.kdenlive', '_out.kdenlive', self.kdenliveFile.inputFilename)
+			self.kdenliveFile.Save(output_filename)
+			print('inputFilename:', )
+
 		print('save() done')
 
 if len(sys.argv) == 1:

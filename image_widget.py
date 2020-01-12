@@ -31,7 +31,8 @@ class ImageWidget(QWidget):
 	def setBboxes01(self, bboxes):
 		print('setBboxes01() bboxes:', bboxes)
 		for i in range(0, len(self.bboxEditors)):
-			self.bboxEditors[i].setBbox01(bboxes[i])
+			if i < len(bboxes):
+				self.bboxEditors[i].setBbox01(bboxes[i])
 		self.update()
 
 	def setTargetRatio(self, ratio):
