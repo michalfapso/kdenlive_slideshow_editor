@@ -24,11 +24,37 @@ class KdenliveFile:
 	def __init__(self):
 		self.timeline = None
 		self.inputFilename = ''
+		self.beatFiles = []
+		self.beats = []
 
 	def Load(self, filename):
 		self.timeline = otio.adapters.read_from_file(filename)
 		self.inputFilename = filename
 	#mytimeline = otio.adapters.read_from_file("/media/miso/data/foto/2016-08-24..27 Torquay 1/premiere/export_seq.edl", rate=25)
+
+	def AddBeats(self, filenameAudio, filenameBeats):
+		self.beats = []
+		self.beatFiles.append({
+			'filenameAudio': filenameAudio,
+			'filenameBeats': filenameBeats
+		})
+		for beatFile in self.beatFiles:
+			match = self.FindClip('.*' + beatFile['filenameAudio'])
+			if match is None:
+				continue
+			for beat in self.ParseBeats(beatFile['filenameBeats']):
+				if beat['nr'] != 1:
+					continue
+				# Skip beats outside of the clip's in-out boundaries
+				if (beat['t'] < match['item'].source_range.start_time) or (beat['t'] > match['item'].source_range.start_time + match['item'].source_range.duration):
+					continue
+				beat_global = {
+					't': match['tStart'] - match['item'].source_range.start_time + beat['t'],
+					'nr': beat['nr'],
+				}
+				self.beats.append(beat_global)
+		self.beats.sort(key=lambda beat: beat['t'])
+
 
 	def ParseBeats(self, filename):
 		beats = []
@@ -45,9 +71,22 @@ class KdenliveFile:
 				line = f.readline()
 		return beats
 
-	def AddGuides(self, filename):
+	def FindClip(self, rxFilename):
+		rate = self.timeline.duration().rate
+		for track in self.timeline.tracks:
+			t = otio.opentime.RationalTime.from_seconds(0.0).rescaled_to(rate) # start time of the current clip
+			for item in track:
+				if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
+					resource = item.media_reference.target_url
+					if re.match(rxFilename, resource):
+						return {'track': track, 'item': item, 'tStart': t}
+				t += item.source_range.duration
+		return None
+			
+
+	def AddBeatGuides(self):
 		guides = self.timeline.metadata['guides']
-		for beat in self.ParseBeats(filename):
+		for beat in self.beats:
 			if beat['nr'] != 1:
 				continue
 			guides.append({
@@ -56,22 +95,13 @@ class KdenliveFile:
 				'type': beat['nr'],
 			})
 
-#	def GetClosestBeatIdxForTime(self, beats, idxBegin, t):
-#		i_beat = idxBegin
-#		if beats[i_beat]['t'] < t_next and i_beat + 1 < len(beats):
-#			while beats[i_beat + 1]['t'] < t_next:
-#				i_beat += 1
-#		return i_beat
-
-	def SynchronizeToBeats(self, filename):
+	def SynchronizeToBeats(self):
 		print('SynchronizeToBeats() BEGIN --------------------------------------------------')
 		tracks = ['main_v', 'main_a'] # 
 		PHOTO_DURATION_MIN = 2
 		PHOTO_DURATION_MAX = 4
 		SHIFT_MAX = 2
 		rate = self.timeline.duration().rate
-		beats = self.ParseBeats(filename)
-		beats = list(filter(lambda elem: elem['nr'] == 1, beats))
 
 		# Find master and slave tracks
 		track_master = None
@@ -99,18 +129,18 @@ class KdenliveFile:
 			clip_out = clip_in + clip_dur
 			print('t:', t, 'clip_in:', clip_in, 'clip_dur:', clip_dur)
 			t_next = t + clip_dur
-			#i_beat = self.GetClosestBeatIdxForTime(beats, i_beat, t_next)
-			if beats[i_beat]['t'] < t_next:
-				while (i_beat + 1 < len(beats)) and (beats[i_beat + 1]['t'] < t_next):
+			#i_beat = self.GetClosestBeatIdxForTime(self.beats, i_beat, t_next)
+			if self.beats[i_beat]['t'] < t_next:
+				while (i_beat + 1 < len(self.beats)) and (self.beats[i_beat + 1]['t'] < t_next):
 					i_beat += 1
-				if i_beat + 1 < len(beats):
-					if t_next - beats[i_beat]['t'] > beats[i_beat + 1]['t'] - t_next:
+				if i_beat + 1 < len(self.beats):
+					if t_next - self.beats[i_beat]['t'] > self.beats[i_beat + 1]['t'] - t_next:
 						i_beat += 1
-			t_diff = beats[i_beat]['t'] - t_next
-			print('i_beat:', i_beat, 'beat:', beats[i_beat], beats[i_beat]['t'].to_timecode(), 't_diff:', t_diff)
+			t_diff = self.beats[i_beat]['t'] - t_next
+			print('i_beat:', i_beat, 'beat:', self.beats[i_beat], self.beats[i_beat]['t'].to_timecode(), 't_diff:', t_diff)
 			if abs(t_diff.to_seconds()) < SHIFT_MAX:
 				# Round the beat time to integer frames count
-				t_next = otio.opentime.RationalTime(int(beats[i_beat]['t'].to_frames()), rate)
+				t_next = otio.opentime.RationalTime(int(self.beats[i_beat]['t'].to_frames()), rate)
 				clip_dur_old = clip_dur
 				clip_dur = t_next - t
 				clip_dur = clip_dur - otio.opentime.RationalTime(1, rate)

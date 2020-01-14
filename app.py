@@ -151,8 +151,9 @@ class AppWindow(QMainWindow):
 
 		if self.kdenliveFile is not None:
 			self.kdenliveFile.SetImagesData(self.imagesData)
-			self.kdenliveFile.AddGuides('/media/miso/data/mp3/Dali Hornak/Radioactive- Gatsby Souns live.mp3.downbeats')
-			self.kdenliveFile.SynchronizeToBeats('/media/miso/data/mp3/Dali Hornak/Radioactive- Gatsby Souns live.mp3.downbeats')
+			self.kdenliveFile.AddBeats('Radioactive- Gatsby Souns live.mp3', '/media/miso/data/mp3/Dali Hornak/Radioactive- Gatsby Souns live.mp3.downbeats')
+			self.kdenliveFile.AddBeatGuides()
+			self.kdenliveFile.SynchronizeToBeats()
 			output_filename = re.sub(r'\.kdenlive', '_out.kdenlive', self.kdenliveFile.inputFilename)
 			self.kdenliveFile.Save(output_filename)
 			print('inputFilename:', )
