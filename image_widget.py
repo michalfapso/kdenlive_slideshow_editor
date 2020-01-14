@@ -86,6 +86,13 @@ class ImageWidget(QWidget):
 		self.setActiveEditor(self.activeEditorIdx)
 		self.update()
 
+	def swapEditors(self):
+		print('switchEditor() activeEditorIdx:', self.activeEditorIdx)
+		tmp = self.bboxEditors[0].getBbox01()
+		self.bboxEditors[0].setBbox01(self.bboxEditors[1].getBbox01())
+		self.bboxEditors[1].setBbox01(tmp)
+		self.update()
+
 	def getImageRect(self):
 		print('ImageWidget::getImageRect()')
 		ratio_img = self.img.width() / self.img.height()

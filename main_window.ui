@@ -55,6 +55,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="buttonSwapInOutEditor">
+        <property name="text">
+         <string>Swap In/Out</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="buttonImageNext">
         <property name="text">
          <string>Next Image</string>

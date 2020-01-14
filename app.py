@@ -18,10 +18,12 @@ class AppWindow(QMainWindow):
 		self.ui.setupUi(self)
 		self.ui.buttonDone             .clicked.connect(self.slot_on_buttonDone_clicked)
 		self.ui.buttonSwitchInOutEditor.clicked.connect(self.slot_on_buttonSwitchInOutEditor_clicked)
+		self.ui.buttonSwapInOutEditor  .clicked.connect(self.slot_on_buttonSwapInOutEditor_clicked)
 		self.ui.buttonImageNext        .clicked.connect(self.slot_on_buttonImageNext_clicked)
 		self.ui.buttonImagePrev        .clicked.connect(self.slot_on_buttonImagePrev_clicked)
 		self.ui.checkboxStayInside     .toggled.connect(self.slot_on_checkboxStayInside_toggled)
 		self.ui.buttonSwitchInOutEditor.setShortcut(QKeySequence('Tab'))
+		self.ui.buttonSwapInOutEditor  .setShortcut(QKeySequence('w'))
 		self.ui.buttonImageNext        .setShortcut(QKeySequence('Space'))
 		self.ui.buttonImagePrev        .setShortcut(QKeySequence('Backspace'))
 		self.ui.checkboxStayInside     .setShortcut(QKeySequence('s'))
@@ -121,6 +123,10 @@ class AppWindow(QMainWindow):
 		print('switch editor')
 		traceback.print_stack(file = sys.stdout)
 		self.ui.image.switchEditor()
+
+	def slot_on_buttonSwapInOutEditor_clicked(self):
+		print('swap editor')
+		self.ui.image.swapEditors()
 
 	def setImageIdx(self, idx):
 		print('setImageIdx() ', self.imageIdx, '->', idx)
