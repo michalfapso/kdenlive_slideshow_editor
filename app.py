@@ -34,21 +34,34 @@ class AppWindow(QMainWindow):
 			print('open kdenlive file')
 			self.kdenliveFile = KdenliveFile()
 			self.kdenliveFile.Load(sys.argv[1])
-			self.imagesData = self.kdenliveFile.GetImagesData()
-			self.imagesData = dict(filter(lambda elem: re.match('.*\.jpg', elem[0]), self.imagesData.items()))
-			for img_path in self.imagesData:
-				self.images.append(img_path)
 		else:
 			self.images = sys.argv[1:]
 			print('images:', self.images)
-			try:
-				with open('image_bboxes.json', 'r') as f:
-					json_str = f.read()
-					print('json_str:', json_str)
-					self.fromJson(json_str)
-			except:
-				print('WARNING: unable to parse json data')
-				traceback.print_exc()
+
+		# Load bboxes from json
+		try:
+			with open(self.getBboxesFilename(), 'r') as f:
+				json_str = f.read()
+				print('json_str:', json_str)
+				self.fromJson(json_str)
+		except:
+			print('WARNING: unable to parse json data')
+			traceback.print_exc()
+
+		# Override json bboxes with kdenlive clip transformations
+		if self.kdenliveFile is not None:
+			images_data = self.kdenliveFile.GetImagesData()
+			images_data = dict(filter(lambda elem: re.match('.*\.jpg', elem[0]), images_data.items()))
+			for img_path in images_data:
+				if img_path not in self.images:
+					self.images.append(img_path)
+			for img_path in images_data:
+				print('img_path:', img_path)
+				if 'bboxes' in images_data[img_path] and len(images_data[img_path]['bboxes']) > 0:
+					print('overriding json bboxes:', self.imagesData[img_path], ' with clip transform bboxes:', images_data[img_path])
+					self.imagesData[img_path] = images_data[img_path]
+			#self.imagesData = {**self.imagesData, **images_data}
+
 		self.imageIdx = 0
 		img_path = self.images[self.imageIdx]
 		print('imagesData:', self.imagesData)
@@ -111,14 +124,24 @@ class AppWindow(QMainWindow):
 
 	def setImageIdx(self, idx):
 		print('setImageIdx() ', self.imageIdx, '->', idx)
-		print('imagesData:', self.imagesData)
+		# Temporarily don't restrict bboxes
+		self.ui.checkboxStayInside.setChecked(False)
+
+		#print('imagesData:', self.imagesData)
 		self.saveCurrentImageData()
 		self.imageIdx = max(0, min(len(self.images)-1, idx))
 		img_path = self.images[self.imageIdx]
+		print('img_path:', img_path)
 		self.ui.image.openImage(img_path)
 		if img_path in self.imagesData:
 			print('img_path:', img_path, 'bboxes:', self.imagesData[img_path])
-			self.ui.checkboxStayInside.setChecked(self.imagesData[img_path]['stay_inside_image'])
+			#self.ui.checkboxStayInside.setChecked(self.imagesData[img_path]['stay_inside_image'])
+			stay_inside = True
+			for bbox in self.imagesData[img_path]['bboxes']:
+				if bbox.left() < 0 or bbox.top() < 0 or bbox.right() > 1 or bbox.bottom() > 1:
+					stay_inside = False
+			print('stay_inside:', stay_inside)
+			self.ui.checkboxStayInside.setChecked(stay_inside)
 			self.ui.image.setBboxes01(self.imagesData[img_path]['bboxes'])
 		self.updateInfo()
 
@@ -141,19 +164,27 @@ class AppWindow(QMainWindow):
 		self.imagesData[img_path]['bboxes'] = bboxes
 		print('saveCurrentImageData() bboxes:', bboxes)
 
+	def getBboxesFilename(self):
+		if self.kdenliveFile is None:
+			return 'image_bboxes.json'
+		else:
+			return re.sub(r'\.kdenlive', '_bboxes.json', self.kdenliveFile.inputFilename)
+
 	def save(self):
 		self.saveCurrentImageData()
 		json_str = self.toJson()
 
 		print('json_str:', json_str)
-		with open("image_bboxes.json", "w") as text_file:
+		bboxes_filename = self.getBboxesFilename()
+		with open(bboxes_filename, "w") as text_file:
 			text_file.write(json_str)
 
 		if self.kdenliveFile is not None:
-			self.kdenliveFile.SetImagesData(self.imagesData)
 			self.kdenliveFile.AddBeats('Radioactive- Gatsby Souns live.mp3', '/media/miso/data/mp3/Dali Hornak/Radioactive- Gatsby Souns live.mp3.downbeats')
 			self.kdenliveFile.AddBeatGuides()
 			self.kdenliveFile.SynchronizeToBeats()
+			# Note: SetImagesData() has to be applied after SynchronizeToBeats() which modifies duration of clips
+			self.kdenliveFile.SetImagesData(self.imagesData)
 			output_filename = re.sub(r'\.kdenlive', '_out.kdenlive', self.kdenliveFile.inputFilename)
 			self.kdenliveFile.Save(output_filename)
 			print('inputFilename:', )

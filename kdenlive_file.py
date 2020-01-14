@@ -85,6 +85,8 @@ class KdenliveFile:
 			
 
 	def AddBeatGuides(self):
+		if 'guides' not in self.timeline.metadata:
+			self.timeline.metadata['guides'] = []
 		guides = self.timeline.metadata['guides']
 		for beat in self.beats:
 			if beat['nr'] != 1:
@@ -143,7 +145,7 @@ class KdenliveFile:
 				t_next = otio.opentime.RationalTime(int(self.beats[i_beat]['t'].to_frames()), rate)
 				clip_dur_old = clip_dur
 				clip_dur = t_next - t
-				clip_dur = clip_dur - otio.opentime.RationalTime(1, rate)
+				#clip_dur = clip_dur - otio.opentime.RationalTime(1, rate)
 				print('clip_dur:', clip_dur_old, '->', clip_dur)
 				item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
 				#item.source_range.duration = clip_dur
@@ -157,8 +159,9 @@ class KdenliveFile:
 				
 				if clips_overlap(item, t, track_slave[i_slave], t_slave):
 					clip_dur_diff = clip_dur - clip_dur_old
-					print('adjust_clip_duration() clip:', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
+					print('adjust_clip_duration() clip in :', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
 					adjust_clip_duration(track_slave[i_slave], clip_dur_diff)
+					print('adjust_clip_duration() clip out:', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
 
 			print('item out:', item)
 			print('item duration:', item.source_range.duration)
@@ -221,7 +224,7 @@ class KdenliveFile:
 					if not resource in imagesData:
 						continue
 					clip_in = item.source_range.start_time
-					clip_out = item.source_range.duration + clip_in
+					clip_out = clip_in + item.source_range.duration - otio.opentime.RationalTime(1, rate)
 					print('clip_in :', clip_in)
 					print('clip_out:', clip_out)
 					if not 'bboxes' in imagesData[resource]:
@@ -229,6 +232,7 @@ class KdenliveFile:
 					bboxes = imagesData[resource]['bboxes']
 					print('bboxes:', bboxes)
 					if len(bboxes) == 2:
+						print('transform clip_out to_time_string():', clip_out.to_time_string(), 'to_timecode():', clip_out.to_timecode())
 						transform_rect_str = \
 							'00:00:00,000~=' + ' '.join(str(int(x)) for x in KdenliveFile.bbox_01_to_keyframe(bboxes[0])) + ' 1;' + \
 							clip_out.to_time_string().replace(',', '.') + '~=' + ' '.join(str(int(x)) for x in KdenliveFile.bbox_01_to_keyframe(bboxes[1])) + ' 1;'
