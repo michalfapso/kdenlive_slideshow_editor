@@ -2,6 +2,8 @@ import opentimelineio as otio
 import re
 import time
 from PyQt5.QtCore import QRectF
+import subprocess
+import os
 
 def clips_overlap(clipA, timeClipAStart, clipB, timeClipBStart):
 	clipA_dur = clipA.source_range.duration
@@ -21,6 +23,8 @@ def adjust_clip_duration(clip, durationDiff):
 	clip.source_range = otio.opentime.TimeRange(clip.source_range.start_time, clip.source_range.duration + durationDiff) 
 
 class KdenliveFile:
+	DBNDownBeatTracker_script = '/home/miso/install/madmom/bin/DBNDownBeatTracker'
+
 	def __init__(self):
 		self.timeline = None
 		self.inputFilename = ''
@@ -55,6 +59,19 @@ class KdenliveFile:
 				self.beats.append(beat_global)
 		self.beats.sort(key=lambda beat: beat['t'])
 
+	def AddBeatsForAllMusicClips(self):
+		for track in self.timeline.tracks:
+			for item in track:
+				if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
+					resource = item.media_reference.target_url
+					if re.match(r'.*\.mp3', resource):
+						resource_beats = resource + '.downbeats'
+						if not os.path.exists(resource_beats):
+							command = ['python3', DBNDownBeatTracker_script, 'single', resource]
+							f_out = open(resource_beats, "w")
+							process = subprocess.Popen(command, stdout=f_out)
+							process.wait()
+						self.AddBeats(os.path.basename(resource), resource_beats)
 
 	def ParseBeats(self, filename):
 		beats = []

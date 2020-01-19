@@ -188,6 +188,7 @@ class AppWindow(QMainWindow):
 		if self.kdenliveFile is not None:
 			self.kdenliveFile.GroupClipsWithSameBoundaries()
 			#self.kdenliveFile.AddBeats('Radioactive- Gatsby Souns live.mp3', '/media/miso/data/mp3/Dali Hornak/Radioactive- Gatsby Souns live.mp3.downbeats')
+			self.kdenliveFile.AddBeatsForAllMusicClips()
 			self.kdenliveFile.AddBeatGuides()
 			self.kdenliveFile.SynchronizeToBeats()
 			# Note: SetImagesData() has to be applied after SynchronizeToBeats() which modifies duration of clips
