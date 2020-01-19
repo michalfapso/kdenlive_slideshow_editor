@@ -97,7 +97,66 @@ class KdenliveFile:
 				'type': beat['nr'],
 			})
 
+	def GroupClipsWithSameBoundaries(self):
+		rate = self.timeline.duration().rate
+		idx = []
+		t = []
+		for track in self.timeline.tracks:
+			idx.append(0)
+			t.append(otio.opentime.RationalTime(0, rate))
+
+		N = len(idx)
+		groups = []
+
+		done = False
+		while not done:
+			g = {}
+			i_min = -1
+			t_min = otio.opentime.RationalTime(0, rate)
+			done = True
+			for i in range(0, N):
+				if idx[i] >= len(self.timeline.tracks[i]):
+					continue
+				# Skip gaps:
+				while isinstance(self.timeline.tracks[i][idx[i]], otio.schema.Gap):
+					t[i] += self.timeline.tracks[i][idx[i]].source_range.duration
+					idx[i] += 1
+				clip_dur = self.timeline.tracks[i][idx[i]].source_range.duration
+				if idx[i]+1 < len(self.timeline.tracks[i]):
+					done = False
+					if i_min < 0 or t[i] < t[i_min]:
+						i_min = i
+						t_min = t[i_min] + clip_dur
+				key = str(t[i].to_frames()) + '_' + str(clip_dur.to_frames())
+				if key not in g:
+					g[key] = []
+				g[key].append({'data': str(i) + ':' + str(t[i].to_frames()), 'leaf': 'clip', 'type': 'Leaf'})
+			for gi in g:
+				if len(g[gi]) > 1:
+					group = {'children': g[gi], 'type': 'AVSplit'}
+					groups.append(group)
+			t[i_min] = t_min
+			idx[i_min] += 1
+		self.timeline.metadata['groups'] = groups
+
+
+	def ShiftGroupsTime(self, timeOld, timeNew):
+		frames_diff = (timeNew - timeOld).to_frames()
+		if 'groups' not in self.timeline.metadata:
+			return
+		for group in self.timeline.metadata['groups']:
+			if group['type'] == 'AVSplit':
+				for child in group['children']:
+					[track_num, frame] = child['data'].split(':')
+					frame = int(frame)
+					if frame >= timeOld.to_frames():
+						frame += frames_diff
+					child['data'] = ':'.join([track_num, str(frame)])
+
 	def SynchronizeToBeats(self):
+		if len(self.beats) == 0:
+			print('SynchronizeToBeats(): ERROR: No beats found')
+			return
 		print('SynchronizeToBeats() BEGIN --------------------------------------------------')
 		tracks = ['main_v', 'main_a'] # 
 		PHOTO_DURATION_MIN = 2
@@ -126,7 +185,7 @@ class KdenliveFile:
 			resource = ''
 			if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 				resource = item.media_reference.target_url
-			clip_in = item.source_range.start_time
+			clip_in  = item.source_range.start_time
 			clip_dur = item.source_range.duration
 			clip_out = clip_in + clip_dur
 			print('t:', t, 'clip_in:', clip_in, 'clip_dur:', clip_dur)
@@ -142,12 +201,14 @@ class KdenliveFile:
 			print('i_beat:', i_beat, 'beat:', self.beats[i_beat], self.beats[i_beat]['t'].to_timecode(), 't_diff:', t_diff)
 			if abs(t_diff.to_seconds()) < SHIFT_MAX:
 				# Round the beat time to integer frames count
+				t_next_old = t_next
 				t_next = otio.opentime.RationalTime(int(self.beats[i_beat]['t'].to_frames()), rate)
 				clip_dur_old = clip_dur
 				clip_dur = t_next - t
 				#clip_dur = clip_dur - otio.opentime.RationalTime(1, rate)
 				print('clip_dur:', clip_dur_old, '->', clip_dur)
 				item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
+				self.ShiftGroupsTime(t_next_old, t_next)
 				#item.source_range.duration = clip_dur
 				print('t_next:', t_next, 'clip_dur:', item.source_range.duration)
 				#item.set_source_range(otio.opentime.TimeRange(t, clip_dur))
