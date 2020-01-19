@@ -202,6 +202,9 @@ class KdenliveFile:
 			resource = ''
 			if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 				resource = item.media_reference.target_url
+			ref_in   = item.media_reference.available_range.start_time
+			ref_dur  = item.media_reference.available_range.duration
+			ref_out  = ref_in + ref_dur
 			clip_in  = item.source_range.start_time
 			clip_dur = item.source_range.duration
 			clip_out = clip_in + clip_dur
@@ -222,24 +225,29 @@ class KdenliveFile:
 				t_next = otio.opentime.RationalTime(int(self.beats[i_beat]['t'].to_frames()), rate)
 				clip_dur_old = clip_dur
 				clip_dur = t_next - t
-				#clip_dur = clip_dur - otio.opentime.RationalTime(1, rate)
-				print('clip_dur:', clip_dur_old, '->', clip_dur)
-				item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
-				self.ShiftGroupsTime(t_next_old, t_next)
-				#item.source_range.duration = clip_dur
-				print('t_next:', t_next, 'clip_dur:', item.source_range.duration)
-				#item.set_source_range(otio.opentime.TimeRange(t, clip_dur))
+				clip_out = clip_in + clip_dur
+				if ref_out < clip_out:
+					print('Reference media too short -> can not extend the clip')
+					clip_dur = clip_dur_old
+					clip_out = clip_in + clip_dur
+					t_next = t_next_old
+				else:
+					#clip_dur = clip_dur - otio.opentime.RationalTime(1, rate)
+					print('clip_dur:', clip_dur_old, '->', clip_dur)
+					item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
+					self.ShiftGroupsTime(t_next_old, t_next)
+					#item.source_range.duration = clip_dur
+					print('t_next:', t_next, 'clip_dur:', item.source_range.duration)
+					#item.set_source_range(otio.opentime.TimeRange(t, clip_dur))
 
-				# Find a matching clip in the slave track
-				while (i_slave + 1 < len(track_slave)) and (not clips_overlap(item, t, track_slave[i_slave], t_slave)):
-					t_slave += track_slave[i_slave].source_range.duration
-					i_slave += 1
-				
-				if clips_overlap(item, t, track_slave[i_slave], t_slave):
-					clip_dur_diff = clip_dur - clip_dur_old
-					print('adjust_clip_duration() clip in :', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
-					adjust_clip_duration(track_slave[i_slave], clip_dur_diff)
-					print('adjust_clip_duration() clip out:', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
+					# Find a matching clip in the slave track
+					while (i_slave + 1 < len(track_slave)) and (not clips_overlap(item, t, track_slave[i_slave], t_slave)):
+						t_slave += track_slave[i_slave].source_range.duration
+						i_slave += 1
+					
+					if clips_overlap(item, t, track_slave[i_slave], t_slave):
+						clip_dur_diff = clip_dur - clip_dur_old
+						adjust_clip_duration(track_slave[i_slave], clip_dur_diff)
 
 			print('item out:', item)
 			print('item duration:', item.source_range.duration)
