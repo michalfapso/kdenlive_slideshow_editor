@@ -60,7 +60,8 @@ class AppWindow(QMainWindow):
 			for img_path in images_data:
 				print('img_path:', img_path)
 				if 'bboxes' in images_data[img_path] and len(images_data[img_path]['bboxes']) > 0:
-					print('overriding json bboxes:', self.imagesData[img_path], ' with clip transform bboxes:', images_data[img_path])
+					if img_path in self.imagesData:
+						print('overriding json bboxes:', self.imagesData[img_path], ' with clip transform bboxes:', images_data[img_path])
 					self.imagesData[img_path] = images_data[img_path]
 			#self.imagesData = {**self.imagesData, **images_data}
 
