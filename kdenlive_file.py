@@ -42,6 +42,7 @@ class KdenliveFile:
 			'filenameAudio': filenameAudio,
 			'filenameBeats': filenameBeats
 		})
+		print('AddBeats() beatFiles:', self.beatFiles)
 		for beatFile in self.beatFiles:
 			match = self.FindClip('.*' + beatFile['filenameAudio'])
 			if match is None:
@@ -58,6 +59,7 @@ class KdenliveFile:
 				}
 				self.beats.append(beat_global)
 		self.beats.sort(key=lambda beat: beat['t'])
+		print('AddBeats() beats:', self.beats)
 
 	def AddBeatsForAllMusicClips(self):
 		for track in self.timeline.tracks:
@@ -65,18 +67,22 @@ class KdenliveFile:
 				if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 					resource = item.media_reference.target_url
 					if re.match(r'.*\.mp3', resource):
+						print('AddBeatsForAllMusicClips() music clip found:', resource)
 						resource_beats = resource + '.downbeats'
 						if not os.path.exists(resource_beats):
 							command = ['python3', DBNDownBeatTracker_script, 'single', resource]
+							print('AddBeatsForAllMusicClips() Running command: ', command)
 							f_out = open(resource_beats, "w")
 							process = subprocess.Popen(command, stdout=f_out)
 							process.wait()
+							print('AddBeatsForAllMusicClips() Command returned with exit code:', process.returncode)
 						self.AddBeats(os.path.basename(resource), resource_beats)
 
 	def ParseBeats(self, filename):
+		print('ParseBeats() filename:', filename)
 		beats = []
 		rate = self.timeline.duration().rate
-		print('rate:', rate)
+		print('ParseBeats() rate:', rate)
 		with open(filename, "r") as f:
 			line = f.readline()
 			while line:
@@ -86,6 +92,7 @@ class KdenliveFile:
 					'nr': int(beat_nr),
 				})
 				line = f.readline()
+		print('ParseBeats() beats:', beats)
 		return beats
 
 	def FindClip(self, rxFilename):
@@ -138,6 +145,7 @@ class KdenliveFile:
 				while isinstance(self.timeline.tracks[i][idx[i]], otio.schema.Gap):
 					t[i] += self.timeline.tracks[i][idx[i]].source_range.duration
 					idx[i] += 1
+				print('GroupClipsWithSameBoundaries() i:', i, 'idx:', idx[i])
 				clip_dur = self.timeline.tracks[i][idx[i]].source_range.duration
 				if idx[i]+1 < len(self.timeline.tracks[i]):
 					done = False
@@ -148,24 +156,31 @@ class KdenliveFile:
 				if key not in g:
 					g[key] = []
 				g[key].append({'data': str(i) + ':' + str(t[i].to_frames()), 'leaf': 'clip', 'type': 'Leaf'})
+			print('GroupClipsWithSameBoundaries() g:', g)
 			for gi in g:
 				if len(g[gi]) > 1:
 					group = {'children': g[gi], 'type': 'AVSplit'}
+					print('GroupClipsWithSameBoundaries() append group:', group)
 					groups.append(group)
 			t[i_min] = t_min
 			idx[i_min] += 1
+		print('GroupClipsWithSameBoundaries() groups:', groups)
 		self.timeline.metadata['groups'] = groups
 
 
 	def ShiftGroupsTime(self, timeOld, timeNew):
+		print('ShiftGroupsTime() timeOld:', timeOld, 'timeNew:', timeNew)
 		frames_diff = (timeNew - timeOld).to_frames()
 		if 'groups' not in self.timeline.metadata:
 			return
 		for group in self.timeline.metadata['groups']:
+			print('ShiftGroupsTime() group:', group)
 			if group['type'] == 'AVSplit':
 				for child in group['children']:
+					print('ShiftGroupsTime() child:', child)
 					[track_num, frame] = child['data'].split(':')
 					frame = int(frame)
+					print('ShiftGroupsTime() track_num:', track_num, 'frame:', frame)
 					if frame >= timeOld.to_frames():
 						frame += frames_diff
 					child['data'] = ':'.join([track_num, str(frame)])
@@ -185,8 +200,8 @@ class KdenliveFile:
 		track_master = None
 		track_slave  = None
 		for track in self.timeline.tracks:
-			print('track:', track)
-			print('track name:', track.name)
+			print('SynchronizeToBeats() track:', track)
+			print('SynchronizeToBeats() track name:', track.name)
 			if track.name == tracks[0]:
 				track_master = track
 			if track.name == tracks[1]:
@@ -197,8 +212,8 @@ class KdenliveFile:
 		t_slave = otio.opentime.RationalTime.from_seconds(0.0).rescaled_to(rate) # start time of the current slave clip
 		t       = otio.opentime.RationalTime.from_seconds(0.0).rescaled_to(rate) # start time of the current master clip
 		for item in track_master:
-			print('')
-			print('item:', item)
+			print('SynchronizeToBeats()')
+			print('SynchronizeToBeats() item:', item)
 			resource = ''
 			if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 				resource = item.media_reference.target_url
@@ -208,9 +223,10 @@ class KdenliveFile:
 			clip_in  = item.source_range.start_time
 			clip_dur = item.source_range.duration
 			clip_out = clip_in + clip_dur
-			print('t:', t, 'clip_in:', clip_in, 'clip_dur:', clip_dur)
+			print('SynchronizeToBeats() t:', t, 'clip_in:', clip_in, 'clip_dur:', clip_dur)
 			t_next = t + clip_dur
 			#i_beat = self.GetClosestBeatIdxForTime(self.beats, i_beat, t_next)
+			print('SynchronizeToBeats() t_next:', t_next, 'i_beat:', i_beat, 'len(beats):', len(self.beats))
 			if self.beats[i_beat]['t'] < t_next:
 				while (i_beat + 1 < len(self.beats)) and (self.beats[i_beat + 1]['t'] < t_next):
 					i_beat += 1
@@ -218,7 +234,7 @@ class KdenliveFile:
 					if t_next - self.beats[i_beat]['t'] > self.beats[i_beat + 1]['t'] - t_next:
 						i_beat += 1
 			t_diff = self.beats[i_beat]['t'] - t_next
-			print('i_beat:', i_beat, 'beat:', self.beats[i_beat], self.beats[i_beat]['t'].to_timecode(), 't_diff:', t_diff)
+			print('SynchronizeToBeats() i_beat:', i_beat, 'beat:', self.beats[i_beat], self.beats[i_beat]['t'].to_timecode(), 't_diff:', t_diff)
 			if abs(t_diff.to_seconds()) < SHIFT_MAX:
 				# Round the beat time to integer frames count
 				t_next_old = t_next
@@ -227,17 +243,17 @@ class KdenliveFile:
 				clip_dur = t_next - t
 				clip_out = clip_in + clip_dur
 				if ref_out < clip_out:
-					print('Reference media too short -> can not extend the clip')
+					print('SynchronizeToBeats() Reference media too short -> can not extend the clip')
 					clip_dur = clip_dur_old
 					clip_out = clip_in + clip_dur
 					t_next = t_next_old
 				else:
 					#clip_dur = clip_dur - otio.opentime.RationalTime(1, rate)
-					print('clip_dur:', clip_dur_old, '->', clip_dur)
+					print('SynchronizeToBeats() clip_dur:', clip_dur_old, '->', clip_dur)
 					item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
 					self.ShiftGroupsTime(t_next_old, t_next)
 					#item.source_range.duration = clip_dur
-					print('t_next:', t_next, 'clip_dur:', item.source_range.duration)
+					print('SynchronizeToBeats() t_next:', t_next, 'clip_dur:', item.source_range.duration)
 					#item.set_source_range(otio.opentime.TimeRange(t, clip_dur))
 
 					# Find a matching clip in the slave track
@@ -247,10 +263,12 @@ class KdenliveFile:
 					
 					if clips_overlap(item, t, track_slave[i_slave], t_slave):
 						clip_dur_diff = clip_dur - clip_dur_old
+						print('SynchronizeToBeats() adjust_clip_duration() clip in :', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
 						adjust_clip_duration(track_slave[i_slave], clip_dur_diff)
+						print('SynchronizeToBeats() adjust_clip_duration() clip out:', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
 
-			print('item out:', item)
-			print('item duration:', item.source_range.duration)
+			print('SynchronizeToBeats() item out:', item)
+			print('SynchronizeToBeats() item duration:', item.source_range.duration)
 			t = t_next
 
 
@@ -263,36 +281,36 @@ class KdenliveFile:
 		images_data = {}
 		rate = self.timeline.duration().rate
 		for track in self.timeline.tracks:
-			print('track:', track)
+			print('GetImagesData() track:', track)
 			for item in track:
 				if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 					resource = item.media_reference.target_url
-					print('resource:', resource)
+					print('GetImagesData() resource:', resource)
 					images_data[resource] = {'stay_inside_image': False, 'bboxes':[]}
 					clip_in = item.source_range.start_time
 					clip_out = item.source_range.duration + clip_in
-					print('clip_in :', clip_in)
-					print('clip_out:', clip_out)
+					print('GetImagesData() clip_in :', clip_in)
+					print('GetImagesData() clip_out:', clip_out)
 					for effect in item.effects:
-						print('effect:', effect)
+						print('GetImagesData() effect:', effect)
 						if effect.effect_name == 'qtblend':
 							rect = effect.metadata['rect']
-							print('rect:', rect)
+							print('GetImagesData() rect:', rect)
 							keyframes = KdenliveFile.keyframes_from_string(rect, rate)
-							print('keyframes:', keyframes)
-							print('keyframes_str:', KdenliveFile.keyframes_to_string(keyframes))
+							print('GetImagesData() keyframes:', keyframes)
+							print('GetImagesData() keyframes_str:', KdenliveFile.keyframes_to_string(keyframes))
 							if re.match('.*\.jpg', resource, re.IGNORECASE):
 								if len(keyframes) == 0 or len(keyframes) == 2:
 									for keyframe_time in keyframes:
 										keyframe = keyframes[keyframe_time]
 										bbox = keyframe['val'].split(' ')
-										print('bbox:', bbox)
+										print('GetImagesData() bbox:', bbox)
 										bbox01 = KdenliveFile.bbox_keyframe_to_01(bbox)
 										images_data[resource]['bboxes'].append(bbox01)
-										print('bbox01:', bbox01)
-										print('bbox01 back to keyframe:', KdenliveFile.bbox_01_to_keyframe(bbox01))
+										print('GetImagesData() bbox01:', bbox01)
+										print('GetImagesData() bbox01 back to keyframe:', KdenliveFile.bbox_01_to_keyframe(bbox01))
 
-		print('images_data:', images_data)
+		print('GetImagesData() images_data:', images_data)
 		print('--------------------------------------------------')
 		return images_data
 
@@ -302,43 +320,43 @@ class KdenliveFile:
 		print('KdenliveFile::SetImagesData()')
 		rate = self.timeline.duration().rate
 		for track in self.timeline.tracks:
-			print('track:', track)
+			print('SetImagesData() track:', track)
 			for item in track:
 				if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 					resource = item.media_reference.target_url
-					print('resource:', resource)
+					print('SetImagesData() resource:', resource)
 					if not resource in imagesData:
 						continue
 					clip_in = item.source_range.start_time
 					clip_out = clip_in + item.source_range.duration - otio.opentime.RationalTime(1, rate)
-					print('clip_in :', clip_in)
-					print('clip_out:', clip_out)
+					print('SetImagesData() clip_in :', clip_in)
+					print('SetImagesData() clip_out:', clip_out)
 					if not 'bboxes' in imagesData[resource]:
 						continue
 					bboxes = imagesData[resource]['bboxes']
-					print('bboxes:', bboxes)
+					print('SetImagesData() bboxes:', bboxes)
 					if len(bboxes) == 2:
-						print('transform clip_out to_time_string():', clip_out.to_time_string(), 'to_timecode():', clip_out.to_timecode())
+						print('SetImagesData() transform clip_out to_time_string():', clip_out.to_time_string(), 'to_timecode():', clip_out.to_timecode())
 						transform_rect_str = \
 							'00:00:00,000~=' + ' '.join(str(int(x)) for x in KdenliveFile.bbox_01_to_keyframe(bboxes[0])) + ' 1;' + \
 							clip_out.to_time_string().replace(',', '.') + '~=' + ' '.join(str(int(x)) for x in KdenliveFile.bbox_01_to_keyframe(bboxes[1])) + ' 1;'
 						transform_found = False
 						for effect in item.effects:
-							print('effect:', effect)
+							print('SetImagesData() effect:', effect)
 							if effect.effect_name == 'qtblend':
 								transform_found = True
 								rect = effect.metadata['rect']
 								
 								effect.metadata['rect'] = transform_rect_str
 
-								print('rect:', effect.metadata['rect'])
+								print('SetImagesData() rect:', effect.metadata['rect'])
 
 						if not transform_found:
 							item.effects.append(otio.schema.Effect(
 								effect_name='qtblend',
 								metadata={'compositing': '0', 'distort': '0', 'kdenlive:collapsed': '0', 'kdenlive_id': 'qtblend', 'mlt_service': 'qtblend', 'rect': transform_rect_str, 'rotate_center': '1', 'rotation': '0'}))
-					print('resource:', resource)
-					print('effects:', item.effects)
+					print('SetImagesData() resource:', resource)
+					print('SetImagesData() effects:', item.effects)
 
 		print('--------------------------------------------------')
 
@@ -353,7 +371,7 @@ class KdenliveFile:
 				elif isinstance(item, otio.schema.Gap):
 					name = 'gap'
 				
-				print(name + ' duration:', item.source_range.duration.to_frames())
+				print('DumpClipsLength() ' + name + ' duration:', item.source_range.duration.to_frames())
 		print('DumpClipsLength() END')
 		print('--------------------------------------------------')
 
@@ -378,14 +396,14 @@ class KdenliveFile:
 	@staticmethod
 	def keyframes_from_string(s, rate):
 		kfdict = dict((KdenliveFile.time(t, rate), {'interp':interp, 'val':v}) for (t, interp, v) in re.findall('([^|~=;]*)([|~]?=)([^;]*)', s))
-		print('kfdict:', kfdict)
+		print('keyframes_from_string() kfdict:', kfdict)
 		return kfdict;
 		#for u in s.split(';'):
 
 	@staticmethod
 	def keyframes_to_string(kfdict):
 		"""Build a MLT keyframe string"""
-		print('kfdict.items:', kfdict.items())
+		print('keyframes_to_string() kfdict.items:', kfdict.items())
 		out = []
 		for t, v in kfdict.items():
 			out.append(str(int(t.value)) + v['interp'] + v['val'])
