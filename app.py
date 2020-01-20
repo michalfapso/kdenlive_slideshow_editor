@@ -195,7 +195,13 @@ class AppWindow(QMainWindow):
 			self.kdenliveFile.SetImagesData(self.imagesData)
 			output_filename = re.sub(r'\.kdenlive', '_out.kdenlive', self.kdenliveFile.inputFilename)
 			self.kdenliveFile.Save(output_filename)
-			print('inputFilename:', )
+			self.kdenliveFile.DumpClipsLength()
+			print('output_filename:', output_filename)
+
+			f_saved = KdenliveFile()
+			f_saved.Load(output_filename)
+			print('f_saved:')
+			f_saved.DumpClipsLength()
 
 		print('save() done')
 

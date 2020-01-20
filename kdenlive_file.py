@@ -342,6 +342,22 @@ class KdenliveFile:
 
 		print('--------------------------------------------------')
 
+	def DumpClipsLength(self):
+		print('--------------------------------------------------')
+		print('DumpClipsLength() BEGIN')
+		for track in self.timeline.tracks:
+			for item in track:
+				name='unknown'
+				if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
+					name = 'clip:' + item.media_reference.target_url
+				elif isinstance(item, otio.schema.Gap):
+					name = 'gap'
+				
+				print(name + ' duration:', item.source_range.duration.to_frames())
+		print('DumpClipsLength() END')
+		print('--------------------------------------------------')
+
+
 	def Save(self, filename):
 		otio.adapters.write_to_file(self.timeline, filename)
 
