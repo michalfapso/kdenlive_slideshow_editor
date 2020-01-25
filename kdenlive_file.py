@@ -174,13 +174,13 @@ class KdenliveFile:
 		if 'groups' not in self.timeline.metadata:
 			return
 		for group in self.timeline.metadata['groups']:
-			print('ShiftGroupsTime() group:', group)
+			#print('ShiftGroupsTime() group:', group)
 			if group['type'] == 'AVSplit':
 				for child in group['children']:
-					print('ShiftGroupsTime() child:', child)
+					#print('ShiftGroupsTime() child:', child)
 					[track_num, frame] = child['data'].split(':')
 					frame = int(frame)
-					print('ShiftGroupsTime() track_num:', track_num, 'frame:', frame)
+					#print('ShiftGroupsTime() track_num:', track_num, 'frame:', frame)
 					if frame >= timeOld.to_frames():
 						frame += frames_diff
 					child['data'] = ':'.join([track_num, str(frame)])
