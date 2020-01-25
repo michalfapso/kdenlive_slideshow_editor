@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtCore import QRectF
+from PyQt5.QtCore import QRectF, QPointF
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtGui import QKeySequence
 from main_window import Ui_MainWindow
@@ -129,6 +129,13 @@ class AppWindow(QMainWindow):
 		print('swap editor')
 		self.ui.image.swapEditors()
 
+	def areBboxesInsideImage(self, imgPath):
+		inside = True
+		for bbox in self.imagesData[imgPath]['bboxes']:
+			if bbox.left() < 0 or bbox.top() < 0 or bbox.right() > 1 or bbox.bottom() > 1:
+				inside = False
+		return inside
+
 	def setImageIdx(self, idx):
 		print('setImageIdx() ', self.imageIdx, '->', idx)
 		# Temporarily don't restrict bboxes
@@ -143,10 +150,7 @@ class AppWindow(QMainWindow):
 		if img_path in self.imagesData:
 			print('img_path:', img_path, 'bboxes:', self.imagesData[img_path])
 			#self.ui.checkboxStayInside.setChecked(self.imagesData[img_path]['stay_inside_image'])
-			stay_inside = True
-			for bbox in self.imagesData[img_path]['bboxes']:
-				if bbox.left() < 0 or bbox.top() < 0 or bbox.right() > 1 or bbox.bottom() > 1:
-					stay_inside = False
+			stay_inside = self.areBboxesInsideImage(img_path)
 			print('stay_inside:', stay_inside)
 			self.ui.checkboxStayInside.setChecked(stay_inside)
 			self.ui.image.setBboxes01(self.imagesData[img_path]['bboxes'])
@@ -176,6 +180,34 @@ class AppWindow(QMainWindow):
 			return 'image_bboxes.json'
 		else:
 			return re.sub(r'\.kdenlive', '_bboxes.json', self.kdenliveFile.inputFilename)
+
+	def setBboxesRatioMultiplier(self, ratioMultiplier):
+		for img_path in self.imagesData:
+			print('setBboxesRatioMultiplier() img_path:', img_path)
+			if 'bboxes' not in self.imagesData[img_path]:
+				continue
+			bboxes = self.imagesData[img_path]['bboxes']
+			if len(bboxes) != 2:
+				continue
+			bbox_small = bboxes[0]
+			bbox_large = bboxes[1]
+			if bbox_small.width() > bbox_large.width():
+				# swap
+				bbox_small, bbox_large = bbox_large, bbox_small
+
+			print('setBboxesRatioMultiplier() bbox_small:', bbox_small)
+			print('setBboxesRatioMultiplier() bbox_large:', bbox_large)
+			diff_l = bbox_small.left  () - bbox_large.left  ()
+			diff_r = bbox_small.right () - bbox_large.right ()
+			diff_t = bbox_small.top   () - bbox_large.top   ()
+			diff_b = bbox_small.bottom() - bbox_large.bottom()
+			bbox_small.setLeft  (bbox_large.left  () + diff_l*ratioMultiplier)
+			bbox_small.setTop   (bbox_large.top   () + diff_t*ratioMultiplier)
+			bbox_small.setRight (bbox_large.right () + diff_r*ratioMultiplier)
+			bbox_small.setBottom(bbox_large.bottom() + diff_b*ratioMultiplier)
+			print('setBboxesRatioMultiplier() bbox_small adjusted:', bbox_small)
+			print('setBboxesRatioMultiplier() bboxes:', bboxes)
+
 
 	def save(self):
 		self.saveCurrentImageData()
