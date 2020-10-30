@@ -35,6 +35,7 @@ class BboxEditor(QObject):
 		# h0 = w0*w / r / h
 		w = self.bbox01.width () * self.bboxDrawing.width ()
 		h = self.bbox01.height() * self.bboxDrawing.height()
+		print('bbox01KeepInsideDrawingArea() bboxDrawing:', self.bboxDrawing, 'w:', w, 'h:', h)
 		if h == 0:
 			return
 		if w/h != self.targetRatio:

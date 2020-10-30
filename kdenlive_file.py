@@ -11,16 +11,22 @@ def clips_overlap(clipA, timeClipAStart, clipB, timeClipBStart):
 	
 	timeClipAEnd = timeClipAStart + clipA_dur
 	timeClipBEnd = timeClipBStart + clipB_dur
-	print('clips_overlap() clipA:', clipA)
-	print('clips_overlap() clipB:', clipB)
-	print('clips_overlap() timeClipA:', timeClipAStart, timeClipAEnd)
-	print('clips_overlap() timeClipB:', timeClipBStart, timeClipBEnd)
+	#print('clips_overlap() clipA:', clipA)
+	#print('clips_overlap() clipB:', clipB)
+	#print('clips_overlap() timeClipA:', timeClipAStart, timeClipAEnd)
+	#print('clips_overlap() timeClipB:', timeClipBStart, timeClipBEnd)
 	overlap = timeClipAStart < timeClipBEnd and timeClipAEnd > timeClipBStart
-	print('clips_overlap() res:', overlap)
+	#print('clips_overlap() res:', overlap)
 	return overlap
 
 def adjust_clip_duration(clip, durationDiff):
 	clip.source_range = otio.opentime.TimeRange(clip.source_range.start_time, clip.source_range.duration + durationDiff) 
+
+def is_image(path):
+	return re.match(r'.*\.(jpg|png)', path)
+
+def is_music(path):
+	return re.match(r'.*\.(mp3|webm)', path)
 
 class KdenliveFile:
 	DBNDownBeatTracker_script = '/home/miso/install/madmom/bin/DBNDownBeatTracker'
@@ -44,14 +50,17 @@ class KdenliveFile:
 		})
 		print('AddBeats() beatFiles:', self.beatFiles)
 		for beatFile in self.beatFiles:
-			match = self.FindClip('.*' + beatFile['filenameAudio'])
+			match = self.FindClip('.*' + re.escape(beatFile['filenameAudio']))
 			if match is None:
+				print('AddBeats() clip not found for ', beatFile['filenameAudio'])
 				continue
 			for beat in self.ParseBeats(beatFile['filenameBeats']):
 				if beat['nr'] != 1:
+					print('AddBeats() skipping beat ', beat['nr'])
 					continue
 				# Skip beats outside of the clip's in-out boundaries
 				if (beat['t'] < match['item'].source_range.start_time) or (beat['t'] > match['item'].source_range.start_time + match['item'].source_range.duration):
+					print('AddBeats() skipping beat t:', beat['t'])
 					continue
 				beat_global = {
 					't': match['tStart'] - match['item'].source_range.start_time + beat['t'],
@@ -59,18 +68,18 @@ class KdenliveFile:
 				}
 				self.beats.append(beat_global)
 		self.beats.sort(key=lambda beat: beat['t'])
-		print('AddBeats() beats:', self.beats)
+		print('AddBeats() beats_count:', len(self.beats), ' beats:', self.beats)
 
 	def AddBeatsForAllMusicClips(self):
 		for track in self.timeline.tracks:
 			for item in track:
 				if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 					resource = item.media_reference.target_url
-					if re.match(r'.*\.mp3', resource):
+					if is_music(resource):
 						print('AddBeatsForAllMusicClips() music clip found:', resource)
 						resource_beats = resource + '.downbeats'
 						if not os.path.exists(resource_beats):
-							command = ['python3', DBNDownBeatTracker_script, 'single', resource]
+							command = ['python3', self.DBNDownBeatTracker_script, 'single', resource]
 							print('AddBeatsForAllMusicClips() Running command: ', command)
 							f_out = open(resource_beats, "w")
 							process = subprocess.Popen(command, stdout=f_out)
@@ -120,6 +129,7 @@ class KdenliveFile:
 				'pos': beat['t'],
 				'type': beat['nr'],
 			})
+		print('AddBeatGuides() guides:', self.timeline.metadata['guides'])
 
 	def GroupClipsWithSameBoundaries(self):
 		rate = self.timeline.duration().rate
@@ -212,18 +222,28 @@ class KdenliveFile:
 		t_slave = otio.opentime.RationalTime.from_seconds(0.0).rescaled_to(rate) # start time of the current slave clip
 		t       = otio.opentime.RationalTime.from_seconds(0.0).rescaled_to(rate) # start time of the current master clip
 		for item in track_master:
-			print('SynchronizeToBeats()')
+			print('SynchronizeToBeats() --------------------------------------------------')
 			print('SynchronizeToBeats() item:', item)
 			resource = ''
 			if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 				resource = item.media_reference.target_url
-			ref_in   = item.media_reference.available_range.start_time
-			ref_dur  = item.media_reference.available_range.duration
-			ref_out  = ref_in + ref_dur
 			clip_in  = item.source_range.start_time
 			clip_dur = item.source_range.duration
 			clip_out = clip_in + clip_dur
-			print('SynchronizeToBeats() t:', t, 'clip_in:', clip_in, 'clip_dur:', clip_dur)
+			print('SynchronizeToBeats() clip metadata:', item.metadata)
+			ref_is_expandable = False
+			if isinstance(item, otio.schema.Gap):
+				ref_out = clip_out
+				ref_is_expandable = True
+				print('SynchronizeToBeats() Gap ref_out:', ref_out)
+			else:
+				ref_in  = item.media_reference.available_range.start_time
+				ref_dur = item.media_reference.available_range.duration
+				ref_out = ref_in + ref_dur
+				if is_image(resource):
+					ref_is_expandable = True
+				print('SynchronizeToBeats() ref_in:', ref_in, 'ref_dur:', ref_dur, 'ref_out:', ref_out, 'ref_is_expandable:', ref_is_expandable)
+			print('SynchronizeToBeats() t:', t, 'clip_in:', clip_in, 'clip_dur:', clip_dur, 'clip_out:', clip_out)
 			t_next = t + clip_dur
 			#i_beat = self.GetClosestBeatIdxForTime(self.beats, i_beat, t_next)
 			print('SynchronizeToBeats() t_next:', t_next, 'i_beat:', i_beat, 'len(beats):', len(self.beats))
@@ -242,7 +262,7 @@ class KdenliveFile:
 				clip_dur_old = clip_dur
 				clip_dur = t_next - t
 				clip_out = clip_in + clip_dur
-				if ref_out < clip_out:
+				if ref_out < clip_out and not ref_is_expandable:
 					print('SynchronizeToBeats() Reference media too short -> can not extend the clip')
 					clip_dur = clip_dur_old
 					clip_out = clip_in + clip_dur
@@ -250,22 +270,28 @@ class KdenliveFile:
 				else:
 					#clip_dur = clip_dur - otio.opentime.RationalTime(1, rate)
 					print('SynchronizeToBeats() clip_dur:', clip_dur_old, '->', clip_dur)
-					item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
-					self.ShiftGroupsTime(t_next_old, t_next)
-					#item.source_range.duration = clip_dur
 					print('SynchronizeToBeats() t_next:', t_next, 'clip_dur:', item.source_range.duration)
 					#item.set_source_range(otio.opentime.TimeRange(t, clip_dur))
 
 					# Find a matching clip in the slave track
 					while (i_slave + 1 < len(track_slave)) and (not clips_overlap(item, t, track_slave[i_slave], t_slave)):
+						print('SynchronizeToBeats() skipping slave t:', t_slave, 'item:', track_slave[i_slave])
 						t_slave += track_slave[i_slave].source_range.duration
 						i_slave += 1
 					
+					print('SynchronizeToBeats() slave t:', t_slave, 'item:', track_slave[i_slave])
+					# Detect overlaps before the master clip is changed
 					if clips_overlap(item, t, track_slave[i_slave], t_slave):
+						print('SynchronizeToBeats() slave overlaps')
 						clip_dur_diff = clip_dur - clip_dur_old
-						print('SynchronizeToBeats() adjust_clip_duration() clip in :', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
+						print('SynchronizeToBeats() slave adjust_clip_duration() clip in :', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
 						adjust_clip_duration(track_slave[i_slave], clip_dur_diff)
-						print('SynchronizeToBeats() adjust_clip_duration() clip out:', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
+						print('SynchronizeToBeats() slave adjust_clip_duration() clip out:', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
+
+					# Master clip can be modified after the slave clip
+					item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
+					self.ShiftGroupsTime(t_next_old, t_next)
+					#item.source_range.duration = clip_dur
 
 			print('SynchronizeToBeats() item out:', item)
 			print('SynchronizeToBeats() item duration:', item.source_range.duration)

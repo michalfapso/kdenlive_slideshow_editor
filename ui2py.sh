@@ -1,3 +1,5 @@
 #!/bin/bash
 
-pyuic5 main_window.ui > main_window.py
+for i in *.ui; do
+	pyuic5 "$i" > "${i%.ui}_ui.py"
+done

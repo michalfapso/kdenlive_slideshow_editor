@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtCore import QRect, QRectF, pyqtSignal
+from PyQt5.QtCore import QRect, QRectF, QPointF, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QImage, QPainter, QColor
 from bbox_editor import BboxEditor
@@ -10,7 +10,6 @@ class ImageWidget(QWidget):
 	def __init__(self, parent=None):
 		print('ImageWidget()')
 		super().__init__(parent)
-		self.defaultBboxes = [QRectF(0, 0.1, 1, 0.8), QRectF(0.2, 0.1, 0.8, 0.8)]
 		self.bboxEditors = [BboxEditor(self), BboxEditor(self)]
 		self.bboxEditors[0].setColor(QColor(0, 255, 0))
 		self.bboxEditors[1].setColor(QColor(255, 0, 0))
@@ -47,7 +46,6 @@ class ImageWidget(QWidget):
 		self.img.load(path)
 		for i, ed in enumerate(self.bboxEditors):
 			ed.setDrawingArea(self.getImageRect())
-			ed.setBbox01(self.defaultBboxes[i])
 		self.update()
 
 	def paintEvent(self, e):
@@ -93,7 +91,12 @@ class ImageWidget(QWidget):
 		self.bboxEditors[1].setBbox01(tmp)
 		self.update()
 
+	def getImageSize(self):
+		return self.img.size()
+
 	def getImageRect(self):
+		if self.img.height() == 0:
+			return QRect()
 		print('ImageWidget::getImageRect()')
 		ratio_img = self.img.width() / self.img.height()
 		ratio_w   = self    .width() / self    .height()
