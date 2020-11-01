@@ -184,15 +184,16 @@ class KdenliveFile:
 		if 'groups' not in self.timeline.metadata:
 			return
 		for group in self.timeline.metadata['groups']:
-			#print('ShiftGroupsTime() group:', group)
+			print('ShiftGroupsTime() group:', group)
 			if group['type'] == 'AVSplit':
 				for child in group['children']:
-					#print('ShiftGroupsTime() child:', child)
+					print('ShiftGroupsTime() child:', child)
 					[track_num, frame] = child['data'].split(':')
 					frame = int(frame)
-					#print('ShiftGroupsTime() track_num:', track_num, 'frame:', frame)
+					print('ShiftGroupsTime() track_num:', track_num, 'frame:', frame)
 					if frame >= timeOld.to_frames():
 						frame += frames_diff
+						print('ShiftGroupsTime() shift frame -> ', frame)
 					child['data'] = ':'.join([track_num, str(frame)])
 
 	def SynchronizeToBeats(self):
@@ -227,10 +228,11 @@ class KdenliveFile:
 			resource = ''
 			if isinstance(item, otio.schema.Clip) and isinstance(item.media_reference, otio.schema.ExternalReference):
 				resource = item.media_reference.target_url
+			print('SynchronizeToBeats() clip metadata:', item.metadata)
 			clip_in  = item.source_range.start_time
 			clip_dur = item.source_range.duration
 			clip_out = clip_in + clip_dur
-			print('SynchronizeToBeats() clip metadata:', item.metadata)
+			print('SynchronizeToBeats() t:', t, 'clip_in:', clip_in, 'clip_dur:', clip_dur, 'clip_out:', clip_out)
 			ref_is_expandable = False
 			if isinstance(item, otio.schema.Gap):
 				ref_out = clip_out
@@ -243,7 +245,6 @@ class KdenliveFile:
 				if is_image(resource):
 					ref_is_expandable = True
 				print('SynchronizeToBeats() ref_in:', ref_in, 'ref_dur:', ref_dur, 'ref_out:', ref_out, 'ref_is_expandable:', ref_is_expandable)
-			print('SynchronizeToBeats() t:', t, 'clip_in:', clip_in, 'clip_dur:', clip_dur, 'clip_out:', clip_out)
 			t_next = t + clip_dur
 			#i_beat = self.GetClosestBeatIdxForTime(self.beats, i_beat, t_next)
 			print('SynchronizeToBeats() t_next:', t_next, 'i_beat:', i_beat, 'len(beats):', len(self.beats))
@@ -290,12 +291,16 @@ class KdenliveFile:
 
 					# Master clip can be modified after the slave clip
 					item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
+					print('SynchronizeToBeats() master clip modified:', item)
 					self.ShiftGroupsTime(t_next_old, t_next)
 					#item.source_range.duration = clip_dur
 
 			print('SynchronizeToBeats() item out:', item)
 			print('SynchronizeToBeats() item duration:', item.source_range.duration)
 			t = t_next
+			# if (resource == "clips/3508_IMG.jpg"):
+			# 	print('SynchronizeToBeats() BREAK')
+			# 	break
 
 
 		print('SynchronizeToBeats() END --------------------------------------------------')
