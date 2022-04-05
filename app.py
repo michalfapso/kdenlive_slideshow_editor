@@ -402,12 +402,11 @@ class AppWindow(QMainWindow):
 		print('slot_on_buttonApplyBboxRatioMultiplier_clicked() mul:', mul)
 		self.setBboxesRatioMultiplier(mul)
 
-#if len(sys.argv) == 1:
-#	print('Usage: ' + sys.argv[0] + ' photo0.jpg photo1.jpg photo2.jpg ...')
-#	print('Output is generated to image_bboxes.json')
-#else:
-app = QApplication(sys.argv)
-w = AppWindow()
-w.show()
-sys.exit(app.exec_())
-
+if len(sys.argv) == 1:
+	print('Usage: ' + sys.argv[0] + ' photo0.jpg photo1.jpg photo2.jpg ...')
+	print('Output is generated to image_bboxes.json')
+else:
+	app = QApplication(sys.argv)
+	w = AppWindow()
+	w.show()
+	sys.exit(app.exec_())
