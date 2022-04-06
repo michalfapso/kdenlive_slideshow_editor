@@ -1,13 +1,11 @@
 import sys
-from PyQt5.QtCore import QRectF, QPointF, QSettings, QCoreApplication
+from PyQt5.QtCore import QRectF, QPointF, QSettings
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 from PyQt5.QtGui import QKeySequence
 from main_window_ui import Ui_MainWindow
 import traceback
 import json
 import re
-import opentimelineio as otio
-import time
 import os
 from kdenlive_file import KdenliveFile
 
@@ -289,15 +287,15 @@ class AppWindow(QMainWindow):
 		self.SetImageIdx(0)
 
 	def LoadImages(self, filenames):
-		self.images = filanemes
+		self.images = filenames
 		self.SetImageIdx(0)
 
 	def slot_on_buttonLoadImages_clicked(self):
 		print('slot_on_buttonLoadImages_clicked()')
 		filenames, filt = QFileDialog.getOpenFileNames(self, "Load images", self.settings.value('filedialog_path', ''), "Image Files (*.jpg, *.png, *.tiff)")
-		if filename is None or filename == '':
+		if filenames is None or filenames == '':
 			return
-		self.settings.setValue('filedialog_path', os.path.dirname(filename))
+		self.settings.setValue('filedialog_path', os.path.dirname(filenames))
 		print('filenames:', filenames)
 		self.LoadImages(filenames)
 
@@ -402,12 +400,11 @@ class AppWindow(QMainWindow):
 		print('slot_on_buttonApplyBboxRatioMultiplier_clicked() mul:', mul)
 		self.setBboxesRatioMultiplier(mul)
 
-#if len(sys.argv) == 1:
-#	print('Usage: ' + sys.argv[0] + ' photo0.jpg photo1.jpg photo2.jpg ...')
-#	print('Output is generated to image_bboxes.json')
-#else:
+# if len(sys.argv) == 1:
+# 	print('Usage: ' + sys.argv[0] + ' photo0.jpg photo1.jpg photo2.jpg ...')
+# 	print('Output is generated to image_bboxes.json')
+# else:
 app = QApplication(sys.argv)
 w = AppWindow()
 w.show()
 sys.exit(app.exec_())
-

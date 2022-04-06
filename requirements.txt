@@ -1,0 +1,2 @@
+PyQt5==5.15.6
+OpenTimelineIO==0.14.1

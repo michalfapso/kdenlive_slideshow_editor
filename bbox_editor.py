@@ -1,7 +1,5 @@
-import sys
 from PyQt5.QtCore import QObject, QRect, QRectF, QPoint, QPointF, pyqtSignal
-from PyQt5.QtGui import QPainter, QColor, QPen
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtGui import QColor, QPen
 import datetime
 
 class BboxEditor(QObject):
@@ -160,4 +158,3 @@ class BboxEditor(QObject):
 
 	def getBbox01(self):
 		return self.bbox01
-
