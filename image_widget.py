@@ -1,5 +1,4 @@
-import sys
-from PyQt5.QtCore import QRect, QRectF, QPointF, pyqtSignal
+from PyQt5.QtCore import QRect, pyqtSignal
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QImage, QPainter, QColor
 from bbox_editor import BboxEditor
@@ -113,5 +112,3 @@ class ImageWidget(QWidget):
 			self.rect().center().y() - h/2,
 			w,
 			h)
-
-

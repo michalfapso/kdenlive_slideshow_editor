@@ -1,6 +1,5 @@
 import opentimelineio as otio
 import re
-import time
 from PyQt5.QtCore import QRectF
 import subprocess
 import os
@@ -8,7 +7,7 @@ import os
 def clips_overlap(clipA, timeClipAStart, clipB, timeClipBStart):
 	clipA_dur = clipA.source_range.duration
 	clipB_dur = clipB.source_range.duration
-	
+
 	timeClipAEnd = timeClipAStart + clipA_dur
 	timeClipBEnd = timeClipBStart + clipB_dur
 	#print('clips_overlap() clipA:', clipA)
@@ -20,7 +19,7 @@ def clips_overlap(clipA, timeClipAStart, clipB, timeClipBStart):
 	return overlap
 
 def adjust_clip_duration(clip, durationDiff):
-	clip.source_range = otio.opentime.TimeRange(clip.source_range.start_time, clip.source_range.duration + durationDiff) 
+	clip.source_range = otio.opentime.TimeRange(clip.source_range.start_time, clip.source_range.duration + durationDiff)
 
 def is_image(path):
 	return re.match(r'.*\.(jpg|png)', path)
@@ -115,7 +114,7 @@ class KdenliveFile:
 						return {'track': track, 'item': item, 'tStart': t}
 				t += item.source_range.duration
 		return None
-			
+
 
 	def AddBeatGuides(self):
 		if 'guides' not in self.timeline.metadata:
@@ -201,7 +200,7 @@ class KdenliveFile:
 			print('SynchronizeToBeats(): ERROR: No beats found')
 			return
 		print('SynchronizeToBeats() BEGIN --------------------------------------------------')
-		tracks = ['main_v', 'main_a'] # 
+		tracks = ['main_v', 'main_a'] #
 		PHOTO_DURATION_MIN = 2
 		PHOTO_DURATION_MAX = 4
 		SHIFT_MAX = 2
@@ -279,7 +278,7 @@ class KdenliveFile:
 						print('SynchronizeToBeats() skipping slave t:', t_slave, 'item:', track_slave[i_slave])
 						t_slave += track_slave[i_slave].source_range.duration
 						i_slave += 1
-					
+
 					print('SynchronizeToBeats() slave t:', t_slave, 'item:', track_slave[i_slave])
 					# Detect overlaps before the master clip is changed
 					if clips_overlap(item, t, track_slave[i_slave], t_slave):
@@ -377,7 +376,7 @@ class KdenliveFile:
 							if effect.effect_name == 'qtblend':
 								transform_found = True
 								rect = effect.metadata['rect']
-								
+
 								effect.metadata['rect'] = transform_rect_str
 
 								print('SetImagesData() rect:', effect.metadata['rect'])
@@ -401,7 +400,7 @@ class KdenliveFile:
 					name = 'clip:' + item.media_reference.target_url
 				elif isinstance(item, otio.schema.Gap):
 					name = 'gap'
-				
+
 				print('DumpClipsLength() ' + name + ' duration:', item.source_range.duration.to_frames())
 		print('DumpClipsLength() END')
 		print('--------------------------------------------------')
@@ -461,5 +460,3 @@ class KdenliveFile:
 			h,
 		]
 		return bbox_keyframe
-
-

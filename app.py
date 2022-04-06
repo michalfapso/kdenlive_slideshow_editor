@@ -1,13 +1,11 @@
 import sys
-from PyQt5.QtCore import QRectF, QPointF, QSettings, QCoreApplication
+from PyQt5.QtCore import QRectF, QPointF, QSettings
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 from PyQt5.QtGui import QKeySequence
 from main_window_ui import Ui_MainWindow
 import traceback
 import json
 import re
-import opentimelineio as otio
-import time
 import os
 from kdenlive_file import KdenliveFile
 
