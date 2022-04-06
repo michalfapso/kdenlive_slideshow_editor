@@ -289,15 +289,15 @@ class AppWindow(QMainWindow):
 		self.SetImageIdx(0)
 
 	def LoadImages(self, filenames):
-		self.images = filanemes
+		self.images = filenames
 		self.SetImageIdx(0)
 
 	def slot_on_buttonLoadImages_clicked(self):
 		print('slot_on_buttonLoadImages_clicked()')
 		filenames, filt = QFileDialog.getOpenFileNames(self, "Load images", self.settings.value('filedialog_path', ''), "Image Files (*.jpg, *.png, *.tiff)")
-		if filename is None or filename == '':
+		if filenames is None or filenames == '':
 			return
-		self.settings.setValue('filedialog_path', os.path.dirname(filename))
+		self.settings.setValue('filedialog_path', os.path.dirname(filenames))
 		print('filenames:', filenames)
 		self.LoadImages(filenames)
 
