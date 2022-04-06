@@ -14,3 +14,6 @@ $ pip install requirements-dev.txt
 ```
 # Usage
 Run `app.py` to start the application.
+
+# License
+This project is licensed under the [MIT license](LICENSE.md).
