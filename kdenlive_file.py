@@ -28,7 +28,7 @@ def is_music(path):
 	return re.match(r'.*\.(mp3|webm)', path)
 
 class KdenliveFile:
-	DBNDownBeatTracker_script = '/home/miso/install/madmom/bin/DBNDownBeatTracker'
+	DBNDownBeatTracker_script = 'DBNDownBeatTracker' # /home/miso/install/madmom/bin/DBNDownBeatTracker
 
 	def __init__(self):
 		self.timeline = None
@@ -77,8 +77,8 @@ class KdenliveFile:
 					if is_music(resource):
 						print('AddBeatsForAllMusicClips() music clip found:', resource)
 						resource_beats = resource + '.downbeats'
-						if not os.path.exists(resource_beats):
-							command = ['python3', self.DBNDownBeatTracker_script, 'single', resource]
+						if not os.path.exists(resource_beats) or os.path.getsize(resource_beats) == 0:
+							command = [self.DBNDownBeatTracker_script, 'single', resource]
 							print('AddBeatsForAllMusicClips() Running command: ', command)
 							f_out = open(resource_beats, "w")
 							process = subprocess.Popen(command, stdout=f_out)
@@ -238,6 +238,12 @@ class KdenliveFile:
 				ref_is_expandable = True
 				print('SynchronizeToBeats() Gap ref_out:', ref_out)
 			else:
+				print('SynchronizeToBeats() NonGap item:', item)
+				print('SynchronizeToBeats() NonGap item.metadata:', item.metadata)
+				print('SynchronizeToBeats() NonGap item.metadata["length"]:', item.metadata['length'])
+				print('SynchronizeToBeats() NonGap item.media_reference:', item.media_reference)
+				print('SynchronizeToBeats() NonGap item.media_reference.available_range:', item.media_reference.available_range)
+				print('SynchronizeToBeats() NonGap item.media_reference.available_range.start_time:', item.media_reference.available_range.start_time)
 				ref_in  = item.media_reference.available_range.start_time
 				ref_dur = item.media_reference.available_range.duration
 				ref_out = ref_in + ref_dur
