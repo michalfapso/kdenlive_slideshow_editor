@@ -2,7 +2,7 @@
 
 Simplify creation of photo/video slideshows in Kdenlive with Ken-Burns effect (pan & zoom) and automatic synchronization of transitions to music beats.
 
-![screenshoot](./doc/kdenlive_slideshow_editor_screen.jpg)
+![screenshoot](./doc/slideshow_editor.gif)
 
 ## Requirements and building blocks
 
@@ -48,6 +48,8 @@ Here are those steps described in more details:
 
 ## Step 1: Create a simple slideshow in Kdenlive
 
+![Kdenlive timeline - simple](./doc/timeline_simple.jpg)
+
 Create a basic kdenlive file with pictures, video clips and music track.
 
 1. Run Kdenlive
@@ -55,15 +57,14 @@ Create a basic kdenlive file with pictures, video clips and music track.
   - **main_v**: video track for pictures and video clips<br/>
   - **main_a**: audio track for audio of your video clips<br/>
   - **music**: audio track for music<br/>
-
-  ![Kdenlive timeline](./doc/timeline_1.jpg)
-
 3. Put your photos and video clips to the *main_v* and *main_a* tracks.
   - You can change the default duration of picture clips in Main Menu -> Settings -> Configure Kdenlive -> Default Durations -> Image Clips. The default of 5 seconds is quite slow. Try to use 3 seconds for more dynamic slideshows. The final duration of each clip will be altered by the beat detection of the *music* track
 4. Put your music to the *music* track.
 5. Save the project to e.g. `~/Videos/kdenlive_slideshow_test/slideshow_test.kdenlive`
 
 ## Step 2: Slideshow enhancements using the custom editor
+
+![screenshoot](./doc/slideshow_editor.gif)
 
 Here, we'll set start and finish boxes of picture clips and align them to match music beats.
 
@@ -89,6 +90,8 @@ Here, we'll set start and finish boxes of picture clips and align them to match 
   - It runs the music beat detector for all audio files in your *music* track and stores the output to `.downbeats` file located in the same folder as the original music file. The beat detection may take a few minutes for the first time, but afterwards it will be instantly loaded from the `.downbeats` file.
 
 ## Step 3: Finish the slideshow in Kdenlive
+
+![Kdenlive timeline - exported from the slideshow editor](./doc/timeline_slideshow.jpg)
 
 1. Open the exported kdenlive project (e.g. `slideshow_test_out.kdenlive`)
 2. You can tweak the slideshow if you want and render it.
