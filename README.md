@@ -5,10 +5,8 @@ Simplify creation of photo/video slideshows in Kdenlive with Ken-Burns effect (p
 ![screenshoot](./doc/slideshow_editor.gif)
 
 A sample input can be seen here: https://youtu.be/mox07jgtXmU
-[![Sample input video](https://img.youtube.com/vi/mox07jgtXmU/0.jpg)](https://www.youtube.com/watch?v=mox07jgtXmU)
 
 And the result after processing in the slideshow editor is here: https://youtu.be/lvu-4r3QrZo
-[![Sample output video](https://img.youtube.com/vi/lvu-4r3QrZo/0.jpg)](https://www.youtube.com/watch?v=lvu-4r3QrZo)
 
 ## Requirements and building blocks
 
