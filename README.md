@@ -2,11 +2,11 @@
 
 Simplify creation of photo/video slideshows in Kdenlive with Ken-Burns effect (pan & zoom) and automatic synchronization of transitions to music beats.
 
+You can watch a sample input project here: https://youtu.be/mox07jgtXmU
+
+And the result after processing it in the slideshow editor is here: https://youtu.be/lvu-4r3QrZo
+
 ![screenshoot](./doc/slideshow_editor.gif)
-
-A sample input can be seen here: https://youtu.be/mox07jgtXmU
-
-And the result after processing in the slideshow editor is here: https://youtu.be/lvu-4r3QrZo
 
 ## Requirements and building blocks
 
