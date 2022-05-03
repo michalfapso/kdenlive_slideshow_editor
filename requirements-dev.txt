@@ -1,5 +1,6 @@
 # install base packages
--r requirements
+-r requirements.txt
 
 # install development packages
-PyQt5-stubs==5.15.2.0   # for better hints in IDE
+PyQt5-stubs>=5.15.2.0   # for better hints in IDE
+devtools>=0.8.0
