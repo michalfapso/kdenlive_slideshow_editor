@@ -62,7 +62,7 @@ Create a basic Kdenlive file with pictures, video clips and music track.
   - **main_a**: audio track for audio of your video clips<br/>
   - **music**: audio track for music<br/>
 3. Put your photos and video clips to the *main_v* and *main_a* tracks.
-  - You can change the default duration of picture clips in Main Menu -> Settings -> Configure Kdenlive -> Default Durations -> Image Clips. The default of 5 seconds is quite slow. Try to use 3 seconds for more dynamic slideshows. The final duration of each clip will be altered by the beat detection of the *music* track
+  - You can change the default duration of picture clips in `Main Menu -> Settings -> Configure Kdenlive -> Default Durations -> Image Clips`. The default of 5 seconds is quite slow. Try to use 3 seconds for more dynamic slideshows. The final duration of each clip will be altered by the beat detection of the *music* track
 4. Put your music to the *music* track.
 5. Save the project to e.g. `~/Videos/kdenlive_slideshow_test/slideshow_test.kdenlive`
 
@@ -77,20 +77,20 @@ Here, we'll set start and finish boxes of picture clips and align them to match 
   ```sh
   source ~/python_env/slideshow/bin/activate
   ```
-3. Go to the Kdenlive project's folder and run the app.py from there:
+3. Go to the Kdenlive project's folder and run the `app.py` from there:
   ```sh
   cd ~/Videos/kdenlive_slideshow_test/
   python3 ~/python_env/slideshow/kdenlive_slideshow_editor/app.py
   ```
-4. Click on the "Load .kdenlive or bboxes.json", select your Kdenlive project file there. You can now set start and finish boxes of the Ken-Burns effect for picture clips.
+4. Click on the **"Load .kdenlive or bboxes.json"**, select your Kdenlive project file there. You can now set start and finish boxes of the Ken-Burns effect for picture clips.
   - The start box is green, finish box is red.
-  - Press the TAB key or click on "Switch In/Out Editor" to switch between them
+  - Press the <kbd>TAB</kbd> key or click on **"Switch In/Out Editor"** to switch between them
   - Use your mouse wheel to resize the active box
-  - Press spacebar or click on "Next Image" to go to the next image in the slideshow.
-  - The "Set Bbox Ratio Multiplier" is for modifying the ratio of start and finish boxes of all pictures in the slideshow. It may come handy when you find out that the Ken-Burns effect looks too fast or too slow.
-5. Click on the "Save bboxes.json" to save the info about start and finish boxes to a json file as a backup (e.g. to `slideshow_test_bboxes.json`)
-  - Next time, when you modify the Kdenlive project (adding more pictures, ...), load it again by clicking on the "Load .kdenlive or bboxes.json" button, but then click the button again to load the bboxes json file. All the boxes you set before are loaded in the editor and you can now specify just the boxes of the newly added pictures.
-6. Click on the "Save .kdenlive" and save it to another file, e.g. `slideshow_test_out.kdenlive`. Don't overwrite the original Kdenlive project.
+  - Press <kbd>spacebar</kbd> or click on **"Next Image"** to go to the next image in the slideshow.
+  - The **"Set Bbox Ratio Multiplier"** is for modifying the ratio of start and finish boxes of all pictures in the slideshow. It may come handy when you find out that the Ken-Burns effect looks too fast or too slow.
+5. Click on the **"Save bboxes.json"** to save the info about start and finish boxes to a json file as a backup (e.g. to `slideshow_test_bboxes.json`)
+  - Next time, when you modify the Kdenlive project (adding more pictures, ...), load it again by clicking on the **"Load .kdenlive or bboxes.json"** button, but **then click the button again** to load the bboxes json file. All the boxes you set before are loaded in the editor and you can now specify just the boxes of the newly added pictures.
+6. Click on the **"Save .kdenlive"** and save it to another file, e.g. `slideshow_test_out.kdenlive`. Don't overwrite the original Kdenlive project.
   - It runs the music beat detector for all audio files in your *music* track and stores the output to `.downbeats` file located in the same folder as the original music file. The beat detection may take a few minutes for the first time, but afterwards it will be instantly loaded from the `.downbeats` file.
 
 ## Step 3: Finish the slideshow in Kdenlive
