@@ -15,7 +15,7 @@ And the result after processing it in the slideshow editor is here: https://yout
   - Python3 as a scripting glue
   - PyQt5 for a user interface
   - [madmom](https://github.com/CPJKU/madmom) for automatic beat detection in music
-  - [OpenTimelineIO](https://github.com/michalfapso/OpenTimelineIO) for working with the Kdenlive file format.
+  - [OpenTimelineIO](https://github.com/michalfapso/OpenTimelineIO) - pathed version of `OpenTimelineIO` for working with the kdenlive file format.
 
 # Installation
 Create local python virtual environment and install packages:
@@ -26,12 +26,13 @@ virtualenv slideshow
 cd slideshow
 source bin/activate
 
-pip3 install 'git+https://github.com/michalfapso/OpenTimelineIO'
-pip3 install cython
-pip3 install numpy
-pip3 install madmom
-pip3 install pyqt5
-pip3 install pyqt5-stubs # for better hints in IDE
+# install packages required by application to run
+pip install -r requirements.txt
+
+# if you plan development work, you can install packages for application 
+# and packages for development with:
+
+pip install -r requirements-dev.txt
 
 git clone https://github.com/michalfapso/kdenlive_slideshow_editor.git
 
