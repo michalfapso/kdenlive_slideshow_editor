@@ -1,2 +1,10 @@
 PyQt5==5.15.6
-OpenTimelineIO==0.14.1
+
+# Pathed version of the openlimelineio python package
+# (requires cmake installed to build)
+git+https://github.com/michalfapso/OpenTimelineIO
+
+cython  # cython is required for madmom
+numpy   # numpy is required for madmom
+madmom
+pyqt5
