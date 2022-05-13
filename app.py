@@ -205,7 +205,12 @@ class AppWindow(QMainWindow):
 					bboxes.append(QRectF(bbox))
 				print('SetImageIdx() bboxes 2:', bboxes)
 			else:
-				ratio_img = img_size.height() / img_size.width()
+				try:
+					ratio_img = img_size.height() / img_size.width()
+				except ZeroDivisionError:
+					# FIXME: KS: 2022-05-13: Not the best solution, but at least program not crashes
+					ratio_img = 2/3
+
 				ratio_target = self.getTargetRatio()
 				print('SetImageIdx() ratio_img:', ratio_img)
 				for bbox in self.defaultBboxesPortrait:
