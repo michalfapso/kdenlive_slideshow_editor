@@ -1,4 +1,4 @@
-name: Python application
+name: Kdenlive Slideshow Editor Tests
 
 on: [push, pull_request]
 
