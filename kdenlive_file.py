@@ -285,14 +285,8 @@ class KdenliveFile:
 						t_slave += track_slave[i_slave].source_range.duration
 						i_slave += 1
 
-					print('SynchronizeToBeats() slave t:', t_slave, 'item:', track_slave[i_slave])
-					# Detect overlaps before the master clip is changed
-					if clips_overlap(item, t, track_slave[i_slave], t_slave):
-						print('SynchronizeToBeats() slave overlaps')
-						clip_dur_diff = clip_dur - clip_dur_old
-						print('SynchronizeToBeats() slave adjust_clip_duration() clip in :', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
-						adjust_clip_duration(track_slave[i_slave], clip_dur_diff)
-						print('SynchronizeToBeats() slave adjust_clip_duration() clip out:', track_slave[i_slave], ' durationDiff:', clip_dur_diff)
+					self.synchronize_slave_to_the_beats(clip_dur, clip_dur_old, i_slave, item, t,
+														t_slave, track_slave)
 
 					# Master clip can be modified after the slave clip
 					item.source_range = otio.opentime.TimeRange(clip_in, clip_dur)
@@ -309,6 +303,26 @@ class KdenliveFile:
 
 
 		print('SynchronizeToBeats() END --------------------------------------------------')
+
+	def synchronize_slave_to_the_beats(self, clip_dur, clip_dur_old, i_slave, item, t, t_slave,
+									   track_slave):
+		"""Synchronize the slave clip to the beats.
+
+		If there is no clip in the slave track skip this step.
+		"""
+		if len(track_slave) > 0:
+			print('SynchronizeToBeats() slave t:', t_slave, 'item:', track_slave[i_slave])
+			# Detect overlaps before the master clip is changed
+			if clips_overlap(item, t, track_slave[i_slave], t_slave):
+				print('SynchronizeToBeats() slave overlaps')
+				clip_dur_diff = clip_dur - clip_dur_old
+				print('SynchronizeToBeats() slave adjust_clip_duration() clip in :',
+					  track_slave[i_slave], ' durationDiff:', clip_dur_diff)
+				adjust_clip_duration(track_slave[i_slave], clip_dur_diff)
+				print('SynchronizeToBeats() slave adjust_clip_duration() clip out:',
+					  track_slave[i_slave], ' durationDiff:', clip_dur_diff)
+		else:
+			print('Skipped SynchronizeToBeats() for slave track - it is empty (no clips)')
 
 	def GetImagesData(self):
 		print('')
