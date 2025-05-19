@@ -9,10 +9,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4 # Updated to v4 (latest is generally better)
-    - name: Set up Python 3.9
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4 # Updated to v4
       with:
-        python-version: '3.9' # Added quotes as preferred by newer versions
+        python-version: '3.10' # Added quotes as preferred by newer versions
     
     # Add this step to install system dependencies required for building packages like OpenTimelineIO
     - name: Install system dependencies for build
