@@ -9,28 +9,29 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4 # Updated to v4
-    
+
     - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
-    # Add this step to install system dependencies required for building packages like OpenTimelineIO or madmom
+    # Install system dependencies required for building packages like OpenTimelineIO or madmom
     - name: Install system dependencies for build
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake python3-dev libsndfile1 ffmpeg # Added libsndfile1 and ffmpeg which madmom might need
 
+    # Install Python build dependencies early
+    # Madmom requires Cython and NumPy during its setup.py phase.
+    # Installing them BEFORE running requirements.txt ensures they are available.
     - name: Install Python build dependencies early
-      # Madmom requires Cython during its setup.py phase.
-      # Installing Cython before running requirements.txt ensures it's available.
       run: |
         python -m pip install --upgrade pip setuptools wheel # Ensure build tools are updated
-        pip install cython==3.0.6 # Explicitly install Cython FIRST
+        pip install cython==3.0.6 numpy==2.2.6 # Explicitly install Cython and NumPy FIRST
 
-    - name: Install Python dependencies (excluding Cython now)
+    - name: Install Python dependencies (excluding Cython/Numpy which are installed early)
       run: |
-        # Cython is already installed from the previous step
+        # Cython and Numpy are already installed from the previous step
         pip install -r requirements.txt
         # Pytest isn't in requirements.txt, so install separately
         pip install pytest
