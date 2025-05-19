@@ -8,16 +8,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4 # Updated to v4 (latest is generally better)
     - name: Set up Python 3.9
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4 # Updated to v4
       with:
-        python-version: 3.9
-    - name: Install dependencies
+        python-version: '3.9' # Added quotes as preferred by newer versions
+    
+    # Add this step to install system dependencies required for building packages like OpenTimelineIO
+    - name: Install system dependencies for build
       run: |
-        python -m pip install --upgrade pip
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake python3-dev
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel # Also good practice to ensure build tools are updated
         pip install -r requirements.txt
         pip install pytest
+        
     - name: Test with pytest
       run: |
         pytest
