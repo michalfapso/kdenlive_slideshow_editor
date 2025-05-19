@@ -57,10 +57,10 @@ class BboxEditor(QObject):
 
 	def bbox01ToPixels(self):
 		r = QRect(
-			self.bboxDrawing.x() + self.bbox01.x()*self.bboxDrawing.width (),
-			self.bboxDrawing.y() + self.bbox01.y()*self.bboxDrawing.height(),
-			self.bbox01.width ()*self.bboxDrawing.width (),
-			self.bbox01.width ()*self.bboxDrawing.width () / self.targetRatio)
+			int(self.bboxDrawing.x() + self.bbox01.x()*self.bboxDrawing.width ()),
+			int(self.bboxDrawing.y() + self.bbox01.y()*self.bboxDrawing.height()),
+			int(self.bbox01.width ()*self.bboxDrawing.width ()),
+			int(self.bbox01.width ()*self.bboxDrawing.width () / self.targetRatio))
 			#self.bbox01.height()*self.bboxDrawing.height())
 		print('bbox01ToPixels() r:', r.width(), r.height(), 'bboxDrawing:', self.bboxDrawing, 'bbox01:', self.bbox01)
 		return r
